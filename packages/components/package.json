@@ -13,14 +13,19 @@
     "./PostLayout.astro": "./src/PostLayout.astro",
     "./mdx": "./src/mdx-components.ts"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
+    "test": "vitest run",
     "prepublishOnly": "echo 'Components ship as source (.astro files)'"
   },
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0"
   },
   "devDependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "vitest": "^4.0.18"
   },
   "publishConfig": {
     "access": "public"

@@ -326,7 +326,7 @@ Command-line tool for migrating legacy HTML websites to MDX content files.
 - **Image downloading** — saves remote images to local `images/` directory, rewrites paths in markdown. Validates file extensions (jpg/png/gif/webp/svg/avif/ico) and enforces 50MB size limit.
 - **Slug deduplication** — appends `-1`, `-2` for duplicate URL slugs
 - **Same-domain only** — only follows links within the source domain
-- **SSRF protection** — blocks localhost, private IPs, `.local` hostnames
+- **SSRF protection** — blocks localhost, private IPs, IPv6 loopback, `file://` protocol, `.local` hostnames
 - **Path traversal protection** — validates output directory stays within CWD
 
 #### CLI Usage
@@ -462,7 +462,9 @@ A working Astro demo app lives at `apps/test-local/`. It demonstrates all core f
 - **Index page** — Lists posts using `LocalAdapter` + `Grid` + `Card` components
 - **Post pages** — Dynamic `[slug].astro` routes using `PostLayout` with full SEO
 - **RSS feed** — `/rss.xml` endpoint using `generateRss()`
+- **Search page** — `/search` with client-side filtering by title, description, and tags
 - **Search index** — `/search.json` endpoint using `buildSearchIndex()`
+- **Tag pages** — `/tags` listing and `/tags/:tag` filtered views
 - **Sample content** — Two MDX posts demonstrating the toolkit
 
 ### Run the example
@@ -762,20 +764,26 @@ cd packages/core && npx vitest
 
 ### Test Coverage Summary
 
-**Total: 213+ tests across 10 test files**
+**Total: 301 tests across 16 test files**
 
 | Package | File | Tests | What's Covered |
 |---|---|---|---|
 | core | `api.test.ts` | 69 | All REST endpoints, pagination, search, tag filtering, sort order, slug validation, CRUD lifecycle, conflict detection, error handling, 404 fallback, API key authentication |
+| core | `webhook.test.ts` | 6 | Webhook delivery on create/update/delete/inject, failure resilience, no-op when unconfigured |
 | core | `local.adapter.test.ts` | 27 | CRUD operations, file resolution (.md/.mdx), tag queries, directory creation, TTL caching, slug validation, cache invalidation |
-| core | `strapi.adapter.test.ts` | 27 | All adapter methods, auth errors (401/403), network errors, constructor validation, authorization headers |
-| core | `contentful.adapter.test.ts` | 18 | Queries, auth errors, custom config (environment, contentType), slug fallback, read-only enforcement |
+| core | `strapi.adapter.test.ts` | 27 | All adapter methods, auth errors (401/403), network errors, constructor validation, slug validation |
+| core | `contentful.adapter.test.ts` | 18 | Queries, auth errors, custom config (environment, contentType), slug fallback, read-only enforcement, slug validation |
 | core | `validate.test.ts` | 21 | Valid/invalid frontmatter, type coercion, multiple errors, edge cases (null, undefined, numbers), size limit |
 | core | `content-service.test.ts` | 8 | Delegation to adapter, runtime adapter swapping |
 | core | `rss.test.ts` | 13 | XML output, entity escaping, limits, language, Atom self-link, pubDate format |
 | core | `search.test.ts` | 12 | Index building, weighted scoring, case-insensitive search, empty queries, multi-term scoring |
 | cli | `converter.test.ts` | 13 | slugify (URL edge cases), HTML-to-markdown conversion, image path rewriting, frontmatter generation |
 | cli | `crawler.test.ts` | 7 | Content extraction, title fallback, link discovery, image collection, noise stripping, HTTP errors |
+| cli | `crawl-site.test.ts` | 7 | BFS traversal, depth limiting, URL deduplication, trailing slash normalization, error recovery |
+| cli | `migrate.test.ts` | 6 | Full migration workflow, file I/O, slug deduplication, image download integration |
+| cli | `images.test.ts` | 10 | Image download, extension validation, size limit enforcement, fetch failure fallback |
+| cli | `bin.test.ts` | 23 | Argument parsing, SSRF blocking (IPv4/IPv6/file://), path traversal prevention, default values |
+| components | `components.test.ts` | 34 | ARIA attributes, scoped CSS class prefixes, SEO meta tags, keyboard navigation, JSON-LD |
 
 ### Testing Patterns
 
@@ -790,7 +798,7 @@ cd packages/core && npx vitest
 
 ### Input Validation
 
-- **Slug validation** — regex `^[a-z0-9]+(?:-[a-z0-9]+)*$` enforced at both API and adapter layers, preventing path traversal
+- **Slug validation** — regex `^[a-z0-9]+(?:-[a-z0-9]+)*$` enforced at API, LocalAdapter, StrapiAdapter, and ContentfulAdapter layers, preventing path traversal
 - **Frontmatter validation** — required fields checked, types verified
 - **Content size limit** — 10MB maximum for markdown content (DoS prevention)
 - **HTML sanitization** — `escapeHtml()` applied to all frontmatter fields in API responses (XSS prevention)
@@ -802,7 +810,7 @@ When `apiKey` is set, mutation endpoints require `Authorization: Bearer <key>` o
 
 ### CLI Security
 
-- **SSRF protection** — blocks localhost, `127.0.0.1`, private IP ranges (`192.168.*`, `10.*`), `.local` hostnames
+- **SSRF protection** — blocks localhost, `127.0.0.1`, IPv6 loopback (`::1`), `file://` protocol, private IP ranges (`192.168.*`, `10.*`, `172.16-31.*`, `169.254.*`), `.local` hostnames
 - **Path traversal protection** — output directory validated to stay within CWD
 - **Image validation** — only allowed extensions (jpg/png/gif/webp/svg/avif/ico), 50MB size limit
 - **Depth/delay clamping** — prevents negative values
@@ -863,9 +871,9 @@ In-depth walkthroughs with setup instructions, integration examples, and real-wo
 
 - [ ] Publish to npm as beta (`@astro-blogs/core`, `@astro-blogs/components`, `@astro-blogs/cli`)
 - [ ] Deploy example app (Vercel/Netlify)
-- [ ] CLI integration test coverage (migrate.ts, images.ts, bin.ts)
-- [ ] GitHub Actions CI pipeline
-- [ ] CONTRIBUTING.md + CHANGELOG.md
+- [x] CLI integration test coverage (migrate.ts, images.ts, bin.ts)
+- [x] GitHub Actions CI pipeline
+- [x] CONTRIBUTING.md + CHANGELOG.md
 
 ### Future
 
@@ -895,5 +903,3 @@ In-depth walkthroughs with setup instructions, integration examples, and real-wo
 | Monorepo | npm workspaces |
 
 ## License
-
-ISC

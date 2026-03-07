@@ -5,6 +5,7 @@ import type {
   PostMeta,
   SaveResult,
 } from "../types.js";
+import { assertValidSlug } from "../slug.js";
 
 export interface ContentfulConfig {
   spaceId: string;
@@ -65,6 +66,7 @@ export class ContentfulAdapter implements ContentAdapter {
   }
 
   async getPost(slug: string): Promise<Post> {
+    assertValidSlug(slug);
     const entries = await this.query({ "fields.slug": slug, limit: "1" });
     if (entries.items.length === 0) {
       throw new Error(`Post not found: ${slug}`);
@@ -104,6 +106,7 @@ export class ContentfulAdapter implements ContentAdapter {
   }
 
   async postExists(slug: string): Promise<boolean> {
+    assertValidSlug(slug);
     const entries = await this.query({ "fields.slug": slug, limit: "1" });
     return entries.items.length > 0;
   }

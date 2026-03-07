@@ -17,7 +17,7 @@ Options:
 `);
 }
 
-function validateOutputPath(outputDir: string): string | null {
+export function validateOutputPath(outputDir: string): string | null {
   const resolved = path.resolve(outputDir);
   const cwd = process.cwd();
   // Prevent writing outside the current working directory tree
@@ -27,7 +27,7 @@ function validateOutputPath(outputDir: string): string | null {
   return null;
 }
 
-function parseArgs(argv: string[]): MigrateOptions | null {
+export function parseArgs(argv: string[]): MigrateOptions | null {
   const args = argv.slice(2);
 
   if (args.includes("--help") || args.length === 0) {
@@ -55,14 +55,31 @@ function parseArgs(argv: string[]): MigrateOptions | null {
     return null;
   }
 
+  // Block non-HTTP protocols (file://, ftp://, etc.)
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+    console.error(`Error: Only http and https protocols are allowed: ${parsedUrl.protocol}`);
+    return null;
+  }
+
   // Block private/internal URLs
-  const hostname = parsedUrl.hostname;
+  const hostname = parsedUrl.hostname.replace(/^\[|\]$/g, ""); // strip IPv6 brackets
   if (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
     hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    hostname === "0:0:0:0:0:0:0:1" ||
     hostname.startsWith("192.168.") ||
     hostname.startsWith("10.") ||
+    hostname.startsWith("172.16.") || hostname.startsWith("172.17.") ||
+    hostname.startsWith("172.18.") || hostname.startsWith("172.19.") ||
+    hostname.startsWith("172.20.") || hostname.startsWith("172.21.") ||
+    hostname.startsWith("172.22.") || hostname.startsWith("172.23.") ||
+    hostname.startsWith("172.24.") || hostname.startsWith("172.25.") ||
+    hostname.startsWith("172.26.") || hostname.startsWith("172.27.") ||
+    hostname.startsWith("172.28.") || hostname.startsWith("172.29.") ||
+    hostname.startsWith("172.30.") || hostname.startsWith("172.31.") ||
+    hostname.startsWith("169.254.") ||
     hostname.endsWith(".local")
   ) {
     console.error(`Error: Crawling internal/private URLs is not allowed: ${hostname}`);
@@ -96,7 +113,11 @@ async function main(): Promise<void> {
   console.log(`\nDone! Migrated ${files.length} page(s).`);
 }
 
-main().catch((err) => {
-  console.error("Migration failed:", err);
-  process.exit(1);
-});
+// Only run when executed directly (not when imported for testing)
+const runningAsScript = process.argv[1]?.replace(/\.ts$/, ".js").endsWith("bin.js");
+if (runningAsScript) {
+  main().catch((err) => {
+    console.error("Migration failed:", err);
+    process.exit(1);
+  });
+}

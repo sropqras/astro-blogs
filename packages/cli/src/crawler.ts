@@ -68,6 +68,7 @@ export async function crawlPage(
 export async function crawlSite(
   options: MigrateOptions,
   onPage: (page: CrawledPage, depth: number) => Promise<void>,
+  fetchFn?: typeof fetch,
 ): Promise<void> {
   const visited = new Set<string>();
   const queue: { url: string; depth: number }[] = [
@@ -81,7 +82,7 @@ export async function crawlSite(
     visited.add(normalized);
 
     try {
-      const page = await crawlPage(entry.url);
+      const page = await crawlPage(entry.url, fetchFn);
       await onPage(page, entry.depth);
 
       if (entry.depth < options.depth) {

@@ -1,0 +1,107 @@
+---
+import { LocalAdapter, buildSearchIndex } from "@astro-blogs/core";
+import Card from "@astro-blogs/components/Card.astro";
+import Grid from "@astro-blogs/components/Grid.astro";
+
+const adapter = new LocalAdapter("./src/content/posts");
+const index = await buildSearchIndex(adapter);
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search — astro-blogs Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        color: #1e293b;
+      }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+      .subtitle { color: #64748b; margin-bottom: 2rem; }
+      .search-input {
+        width: 100%;
+        max-width: 32rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+        outline: none;
+      }
+      .search-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+      .no-results {
+        color: #64748b;
+        font-style: italic;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 1.5rem;
+        color: #3b82f6;
+        text-decoration: none;
+      }
+      .back-link:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <a href="/" class="back-link">&larr; Back to home</a>
+    <h1>Search Posts</h1>
+    <p class="subtitle">Search by title, description, or tag</p>
+
+    <input
+      type="search"
+      class="search-input"
+      placeholder="Type to search..."
+      id="search-input"
+      autofocus
+    />
+
+    <div id="results">
+      <Grid columns={2}>
+        {index.posts.map((post) => (
+          <Card title={post.title} href={`/posts/${post.slug}`} data-search-item
+            data-title={post.title.toLowerCase()}
+            data-description={(post.description ?? "").toLowerCase()}
+            data-tags={(post.tags ?? []).join(" ").toLowerCase()}
+          >
+            <p>{post.description ?? ""}</p>
+            {post.tags && post.tags.length > 0 && (
+              <small>{post.tags.join(", ")}</small>
+            )}
+          </Card>
+        ))}
+      </Grid>
+      <p class="no-results" id="no-results" style="display:none;">No posts match your search.</p>
+    </div>
+
+    <script>
+      const input = document.getElementById("search-input") as HTMLInputElement;
+      const items = document.querySelectorAll("[data-search-item]");
+      const noResults = document.getElementById("no-results")!;
+
+      input.addEventListener("input", () => {
+        const query = input.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        items.forEach((item) => {
+          const el = item as HTMLElement;
+          const title = el.dataset.title ?? "";
+          const desc = el.dataset.description ?? "";
+          const tags = el.dataset.tags ?? "";
+
+          const matches = !query || title.includes(query) || desc.includes(query) || tags.includes(query);
+          el.style.display = matches ? "" : "none";
+          if (matches) visibleCount++;
+        });
+
+        noResults.style.display = visibleCount === 0 ? "" : "none";
+      });
+    </script>
+  </body>
+</html>

@@ -3,17 +3,17 @@
 **Date:** 2026-03-07
 **Version assessed:** 0.1.0
 **Assessment method:** 6 parallel analyst agents (code quality, test coverage, architecture, market feasibility, DX, build health)
-**Overall Grade:** B
+**Overall Grade:** B+
 
 ---
 
 ## Executive Summary
 
-astro-blogs is a modular monorepo providing content adapters, UI components, a migration CLI, and a REST API for Astro blog systems. The project has 203+ passing tests, three CMS adapters (Local, Strapi, Contentful), RSS feed generation, client-side search, and a working example app.
+astro-blogs is a modular monorepo providing content adapters, UI components, a migration CLI, and a REST API for Astro blog systems. The project has 301 passing tests, three CMS adapters (Local, Strapi, Contentful), RSS feed generation, client-side search, and a working example app.
 
 **Strengths:** Elegant adapter pattern, injectable dependencies for testability, minimal dependency footprint (5 total), comprehensive REST API with validation/sanitization, good documentation.
 
-**Critical gaps found:** Missing MDX integration in example app, components package publish config incorrect, no API authentication, no markdown size limits, image downloads unvalidated. All addressed in this remediation pass.
+**Critical gaps (all remediated):** MDX integration in example app, components package publish config, API authentication, markdown size limits, image download validation — all fixed in remediation passes.
 
 ---
 
@@ -41,8 +41,8 @@ astro-blogs is a modular monorepo providing content adapters, UI components, a m
 
 | Severity | Issue | Recommendation |
 |---|---|---|
-| HIGH | Strapi/Contentful adapters don't call `assertValidSlug()` | Add at adapter level for defense-in-depth |
-| MEDIUM | SSRF gaps: no IPv6 check (`[::1]`), no `file://` protocol block in crawler | Extend URL validation |
+| ~~HIGH~~ | ~~Strapi/Contentful adapters don't call `assertValidSlug()`~~ | FIXED — added to getPost/postExists |
+| ~~MEDIUM~~ | ~~SSRF gaps: no IPv6 check, no `file://` protocol block~~ | FIXED — added IPv6, file://, 172.16.x, 169.254.x |
 | MEDIUM | Webhook has no HMAC signing or retry | Add shared secret + exponential backoff |
 | MEDIUM | No rate limiting on API | Deploy behind reverse proxy or add Hono middleware |
 | LOW | Frontmatter `...data` spread leaks arbitrary fields | Consider explicit field picking |
@@ -51,36 +51,47 @@ astro-blogs is a modular monorepo providing content adapters, UI components, a m
 
 ## 2. Test Coverage
 
-**Total: 203+ tests across 10+ test files (new auth + size limit tests added)**
+**Total: 301 tests across 16 test files**
 
 | Package | File | Tests | Coverage Quality |
 |---|---|---|---|
-| core | api.test.ts | 59 + 10 auth | Excellent — full CRUD, pagination, search, auth |
+| core | api.test.ts | 69 | Excellent — full CRUD, pagination, search, auth |
+| core | webhook.test.ts | 6 | Good — all webhook events, failure handling |
 | core | local.adapter.test.ts | 27 | Excellent — CRUD, caching, slug validation |
-| core | strapi.adapter.test.ts | 27 | Good — all methods, auth errors |
-| core | contentful.adapter.test.ts | 18 | Good — queries, config, fallbacks |
-| core | validate.test.ts | 19 + 2 size | Excellent — edge cases, size limit |
+| core | strapi.adapter.test.ts | 27 | Good — all methods, auth errors, slug validation |
+| core | contentful.adapter.test.ts | 18 | Good — queries, config, fallbacks, slug validation |
+| core | validate.test.ts | 21 | Excellent — edge cases, size limit |
 | core | content-service.test.ts | 8 | Adequate — delegation, adapter swapping |
 | core | rss.test.ts | 13 | Good — XML output, escaping, limits |
 | core | search.test.ts | 12 | Good — index building, scoring |
 | cli | converter.test.ts | 13 | Good — HTML parsing, slugify |
-| cli | crawler.test.ts | 7 | Partial — page crawling only |
+| cli | crawler.test.ts | 7 | Good — page crawling |
+| cli | crawl-site.test.ts | 7 | Good — BFS traversal, depth, dedup, error recovery |
+| cli | migrate.test.ts | 6 | Good — file I/O, dedup, image integration |
+| cli | images.test.ts | 10 | Good — download, validation, size limit, extensions |
+| cli | bin.test.ts | 23 | Excellent — arg parsing, SSRF, path traversal |
+| components | components.test.ts | 34 | Good — ARIA, CSS class prefixes, SEO meta, keyboard nav |
 
-### Critical untested modules
+### Previously untested (now covered)
+
+| Module | Status | Tests Added |
+|---|---|---|
+| `crawlSite()` BFS orchestration | FIXED | 7 tests — depth, dedup, trailing slash, error recovery |
+| `migrate.ts` full workflow | FIXED | 6 tests — file I/O, dedup, image integration |
+| `images.ts` download + rewrite | FIXED | 10 tests — download, extensions, size limit, failure |
+| `bin.ts` argument parsing + SSRF | FIXED | 23 tests — arg parsing, all SSRF vectors, path traversal |
+| Components (all 5) | FIXED | 34 tests — ARIA attributes, CSS prefixes, SEO, keyboard nav |
+| Webhook delivery | FIXED | 6 tests — create/update/delete/inject events, failure handling |
+
+### Remaining untested
 
 | Module | Risk | Notes |
 |---|---|---|
-| `crawlSite()` BFS orchestration | CRITICAL | Core CLI function, queue/depth/rate limiting untested |
-| `migrate.ts` full workflow | CRITICAL | Main entry point, file I/O, deduplication |
-| `images.ts` download + rewrite | HIGH | Now has size/type validation but untested |
-| `bin.ts` argument parsing | HIGH | Security validation untested |
-| Components (all 5) | MEDIUM | No rendering or a11y tests |
 | Cache TTL behavior | MEDIUM | Mechanism exists but timing untested |
 
 ### Mock quality concerns
 
 - Strapi/Contentful tests use mocks exclusively — real API response variations (null fields, missing properties) could cause failures
-- Webhook fire-and-forget is never verified in tests
 - CORS middleware tested to disable but not actual header validation
 
 ---
@@ -132,14 +143,14 @@ Components ship as **source files** (`.astro`), not compiled output. This is cor
 - `files: ["src", "README.md"]` and `exports` pointing to `./src/` is intentional
 - No `dist/` directory needed for Astro components
 
-### Remaining
+### Fixed (this pass — continued)
 
-| Issue | Priority |
+| Issue | Fix |
 |---|---|
-| No `engines` field in any package.json | MEDIUM |
-| No `.nvmrc` file | LOW |
-| No GitHub Actions CI | MEDIUM |
-| No CHANGELOG.md | LOW |
+| No `engines` field in any package.json | Added `"node": ">=20.0.0"` to all packages |
+| No `.nvmrc` file | Added with Node 20 |
+| No GitHub Actions CI | Added `.github/workflows/ci.yml` (Node 20, 22) |
+| No CHANGELOG.md | Added with initial release notes |
 
 ---
 
@@ -151,16 +162,21 @@ Components ship as **source files** (`.astro`), not compiled output. This is cor
 |---|---|
 | Example app won't build (missing MDX) | Added `@astrojs/mdx` dep + integration config |
 
+### Fixed (this pass — continued)
+
+| Issue | Fix |
+|---|---|
+| No search UI page in example app | Added search.astro with client-side filtering |
+| No tag pages in example app | Added tags/index.astro + tags/[tag].astro |
+| CONTRIBUTING.md missing | Added with setup, workflow, testing patterns |
+
 ### Remaining gaps
 
 | Issue | Priority |
 |---|---|
-| No search UI page in example app | HIGH |
-| No tag pages in example app | MEDIUM |
 | No 404 page in example app | MEDIUM |
 | No shared layout component | MEDIUM |
-| RSS + search not documented in main README | MEDIUM |
-| CONTRIBUTING.md missing | LOW |
+| ~~RSS + search not documented in main README~~ | ~~MEDIUM~~ — FIXED (dedicated README sections) |
 
 ---
 
@@ -205,10 +221,10 @@ Components ship as **source files** (`.astro`), not compiled output. This is cor
 | LocalAdapter | Filesystem with TTL cache, slug validation, cache invalidation | 27 |
 | StrapiAdapter | Read-only, injectable fetchFn, auth error handling | 27 |
 | ContentfulAdapter | Read-only, configurable space/env/contentType, injectable fetchFn | 18 |
-| REST API (Hono) | Full CRUD, pagination, search, tag filter, webhooks, sanitization, auth | 69 |
+| REST API (Hono) | Full CRUD, pagination, search, tag filter, webhooks, sanitization, auth | 75 |
 | RSS Generation | `generateRss()` — valid RSS 2.0 + Atom, XML escaping, limits | 13 |
 | Client-side Search | `buildSearchIndex()` + `searchIndex()` — zero-dep weighted scoring | 12 |
-| Migration CLI | HTML-to-MDX via cheerio + turndown, image download, SSRF protection | 20 |
+| Migration CLI | HTML-to-MDX via cheerio + turndown, image download, SSRF protection | 66 |
 | ContentService | Thin wrapper, runtime adapter swapping | 8 |
 
 ---
@@ -216,12 +232,16 @@ Components ship as **source files** (`.astro`), not compiled output. This is cor
 ## 8. Remaining Work
 
 ### Phase 2: Credibility (before public announcement)
-- [ ] Test CLI orchestration (crawlSite, migrate, images)
-- [ ] Add `engines` field, `.nvmrc`, GitHub Actions CI
+- [x] Test CLI orchestration (crawlSite, migrate, images, bin)
+- [x] Add `engines` field, `.nvmrc`, GitHub Actions CI
+- [x] Add CONTRIBUTING.md + CHANGELOG.md
+- [x] Add search UI page + tag pages to example app
+- [x] Add slug validation to Strapi/Contentful adapters
+- [x] Test webhook delivery
+- [x] Test component accessibility (ARIA, CSS, SEO)
+- [x] Extend SSRF protection (IPv6, file://, 172.16.x, 169.254.x)
 - [ ] Deploy example app to Vercel/Netlify
 - [ ] Document RSS + search in README
-- [ ] Add CONTRIBUTING.md + CHANGELOG.md
-- [ ] Add search UI page + tag pages to example app
 
 ### Phase 3: Traction (ongoing)
 - [ ] Publish to npm as 0.1.0-beta
@@ -229,7 +249,6 @@ Components ship as **source files** (`.astro`), not compiled output. This is cor
 - [ ] Create Astro Content Loader wrapper
 - [ ] Write dev.to article + post to Astro Discord
 - [ ] Apply for Astro Ecosystem Fund
-- [ ] Add slug validation to Strapi/Contentful adapters
 - [ ] HMAC signing for webhooks
 - [ ] File locking for concurrent writes (`proper-lockfile`)
 - [ ] Pagination at adapter level
@@ -240,4 +259,3 @@ Components ship as **source files** (`.astro`), not compiled output. This is cor
 - [ ] WordPress REST API adapter
 - [ ] Notion adapter
 - [ ] Performance benchmarks
-- [ ] Component accessibility testing

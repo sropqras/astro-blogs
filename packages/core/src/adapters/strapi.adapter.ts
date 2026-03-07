@@ -5,6 +5,7 @@ import type {
   PostMeta,
   SaveResult,
 } from "../types.js";
+import { assertValidSlug } from "../slug.js";
 
 interface StrapiResponse<T> {
   data: T[];
@@ -55,6 +56,7 @@ export class StrapiAdapter implements ContentAdapter {
   }
 
   async getPost(slug: string): Promise<Post> {
+    assertValidSlug(slug);
     const res = await this.request(
       `/api/posts?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=tags`,
     );
@@ -107,6 +109,7 @@ export class StrapiAdapter implements ContentAdapter {
   }
 
   async postExists(slug: string): Promise<boolean> {
+    assertValidSlug(slug);
     try {
       await this.getPost(slug);
       return true;
