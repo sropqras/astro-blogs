@@ -1,0 +1,28 @@
+{
+  "name": "@astro-blogs/components",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "UI components for astro-blogs MDX content",
+  "license": "ISC",
+  "files": ["src", "README.md"],
+  "exports": {
+    "./Card.astro": "./src/Card.astro",
+    "./Grid.astro": "./src/Grid.astro",
+    "./Tabs.astro": "./src/Tabs.astro",
+    "./Button.astro": "./src/Button.astro",
+    "./PostLayout.astro": "./src/PostLayout.astro",
+    "./mdx": "./src/mdx-components.ts"
+  },
+  "scripts": {
+    "prepublishOnly": "echo 'Components ship as source (.astro files)'"
+  },
+  "peerDependencies": {
+    "astro": "^4.0.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "astro": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

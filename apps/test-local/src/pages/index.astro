@@ -1,0 +1,40 @@
+---
+import { LocalAdapter } from "@astro-blogs/core";
+import Card from "@astro-blogs/components/Card.astro";
+import Grid from "@astro-blogs/components/Grid.astro";
+
+const adapter = new LocalAdapter("./src/content/posts");
+const posts = await adapter.getPosts();
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>astro-blogs Demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        color: #1e293b;
+      }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+      .subtitle { color: #64748b; margin-bottom: 2rem; }
+    </style>
+  </head>
+  <body>
+    <h1>astro-blogs Demo</h1>
+    <p class="subtitle">A working example using LocalAdapter + components</p>
+
+    <Grid columns={2}>
+      {posts.map((post) => (
+        <Card title={post.title} href={`/posts/${post.slug}`}>
+          <p>{post.description ?? ""}</p>
+          <small>{new Date(post.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</small>
+        </Card>
+      ))}
+    </Grid>
+  </body>
+</html>

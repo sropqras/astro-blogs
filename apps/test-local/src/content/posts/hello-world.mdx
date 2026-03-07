@@ -1,0 +1,31 @@
+---
+title: Hello World
+date: 2024-06-01
+tags:
+  - intro
+  - astro-blogs
+description: Welcome to astro-blogs — a modular blog toolkit for Astro.
+---
+
+# Hello World
+
+This is a sample post powered by **astro-blogs**. It demonstrates the local content adapter
+reading MDX files from the filesystem.
+
+## Features
+
+- File-based content with frontmatter
+- Automatic tag extraction
+- Built-in search index generation
+- RSS feed support
+
+## Code Example
+
+```typescript
+import { LocalAdapter } from "@astro-blogs/core";
+
+const adapter = new LocalAdapter("./src/content/posts");
+const posts = await adapter.getPosts();
+```
+
+That's all it takes to get started!

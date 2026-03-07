@@ -1,0 +1,190 @@
+---
+interface Props {
+  title: string;
+  date: string;
+  description?: string;
+  tags?: string[];
+  image?: string;
+  author?: string;
+  canonicalUrl?: string;
+  siteName?: string;
+}
+
+const { title, date, description, tags, image, author, canonicalUrl, siteName } = Astro.props;
+const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+const isoDate = new Date(date).toISOString();
+
+const jsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: title,
+  datePublished: isoDate,
+  ...(description && { description }),
+  ...(image && { image }),
+  ...(author && {
+    author: { "@type": "Person", name: author },
+  }),
+  ...(tags && tags.length > 0 && { keywords: tags.join(", ") }),
+});
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {author && <meta name="author" content={author} />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:type" content="article" />
+    {description && <meta property="og:description" content={description} />}
+    {image && <meta property="og:image" content={image} />}
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {siteName && <meta property="og:site_name" content={siteName} />}
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content={image ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    {description && <meta name="twitter:description" content={description} />}
+    {image && <meta name="twitter:image" content={image} />}
+
+    <!-- Article metadata -->
+    <meta property="article:published_time" content={isoDate} />
+    {tags?.map((tag) => (
+      <meta property="article:tag" content={tag} />
+    ))}
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json" set:html={jsonLd} />
+  </head>
+  <body>
+    <article class="ab-post">
+      <header class="ab-post-header">
+        <h1 class="ab-post-title">{title}</h1>
+        <div class="ab-post-meta">
+          <time datetime={isoDate}>{formattedDate}</time>
+          {author && <span class="ab-post-author">by {author}</span>}
+          {tags && tags.length > 0 && (
+            <div class="ab-post-tags">
+              {tags.map((tag) => (
+                <span class="ab-post-tag">{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </header>
+      <div class="ab-post-content">
+        <slot />
+      </div>
+    </article>
+  </body>
+</html>
+
+<style>
+  .ab-post {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .ab-post-header {
+    margin-bottom: 2rem;
+  }
+
+  .ab-post-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+  }
+
+  .ab-post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #64748b;
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+  }
+
+  .ab-post-author {
+    font-style: italic;
+  }
+
+  .ab-post-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .ab-post-tag {
+    background: #f1f5f9;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+  }
+
+  .ab-post-content {
+    line-height: 1.75;
+    color: #1e293b;
+  }
+  .ab-post-content :global(h2) {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 2rem 0 1rem;
+  }
+  .ab-post-content :global(h3) {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem;
+  }
+  .ab-post-content :global(p) {
+    margin: 1rem 0;
+  }
+  .ab-post-content :global(pre) {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+  .ab-post-content :global(code) {
+    font-size: 0.875em;
+  }
+  .ab-post-content :global(a) {
+    color: #3b82f6;
+    text-decoration: underline;
+  }
+  .ab-post-content :global(ul),
+  .ab-post-content :global(ol) {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+  }
+  .ab-post-content :global(li) {
+    margin: 0.25rem 0;
+  }
+  .ab-post-content :global(blockquote) {
+    border-left: 3px solid #3b82f6;
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: #475569;
+    font-style: italic;
+  }
+  .ab-post-content :global(img) {
+    max-width: 100%;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+  }
+  .ab-post-content :global(hr) {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 2rem 0;
+  }
+</style>

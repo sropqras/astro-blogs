@@ -1,0 +1,28 @@
+---
+interface Props {
+  columns?: 2 | 3 | 4;
+  gap?: string;
+}
+
+const { columns = 3, gap = "1.5rem" } = Astro.props;
+---
+
+<div class={`ab-grid ab-grid--${columns}`} style={`--ab-grid-gap: ${gap}`}>
+  <slot />
+</div>
+
+<style>
+  .ab-grid {
+    display: grid;
+    gap: var(--ab-grid-gap, 1.5rem);
+  }
+  .ab-grid--2 { grid-template-columns: repeat(1, 1fr); }
+  .ab-grid--3 { grid-template-columns: repeat(1, 1fr); }
+  .ab-grid--4 { grid-template-columns: repeat(1, 1fr); }
+
+  @media (min-width: 768px) {
+    .ab-grid--2 { grid-template-columns: repeat(2, 1fr); }
+    .ab-grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .ab-grid--4 { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>

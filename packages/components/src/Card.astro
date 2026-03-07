@@ -1,0 +1,50 @@
+---
+interface Props {
+  title: string;
+  image?: string;
+  href?: string;
+}
+
+const { title, image, href } = Astro.props;
+const Tag = href ? "a" : "div";
+---
+
+<Tag
+  class="ab-card"
+  {...(href ? { href } : {})}
+>
+  {image && <img src={image} alt={title} class="ab-card-image" />}
+  <div class="ab-card-body">
+    <h3 class="ab-card-title">{title}</h3>
+    <slot />
+  </div>
+</Tag>
+
+<style>
+  .ab-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+    transition: box-shadow 0.2s;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+  .ab-card:hover {
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+  }
+  .ab-card-image {
+    width: 100%;
+    height: 12rem;
+    object-fit: cover;
+  }
+  .ab-card-body {
+    padding: 1rem;
+  }
+  .ab-card-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+</style>

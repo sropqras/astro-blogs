@@ -1,0 +1,35 @@
+{
+  "name": "@astro-blogs/core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Content adapter library and REST API for Astro blog systems",
+  "license": "ISC",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": "./dist/index.js",
+    "./adapters/local": "./dist/adapters/local.adapter.js",
+    "./adapters/strapi": "./dist/adapters/strapi.adapter.js",
+    "./adapters/contentful": "./dist/adapters/contentful.adapter.js",
+    "./rss": "./dist/rss.js",
+    "./search": "./dist/search.js",
+    "./server": "./dist/server/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.0",
+    "gray-matter": "^4.0.3",
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

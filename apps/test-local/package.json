@@ -1,0 +1,17 @@
+{
+  "name": "@astro-blogs/test-local",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astro-blogs/components": "*",
+    "@astro-blogs/core": "*",
+    "@astrojs/mdx": "^4.0.0",
+    "astro": "^5.0.0"
+  }
+}

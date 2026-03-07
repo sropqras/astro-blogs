@@ -1,0 +1,37 @@
+---
+title: Using Components
+date: 2024-05-20
+tags:
+  - components
+  - tutorial
+description: How to use astro-blogs UI components in your MDX content.
+---
+
+# Using astro-blogs Components
+
+The `@astro-blogs/components` package provides pre-built UI components for your blog.
+
+## Available Components
+
+- **Card** — Display content in a styled card
+- **Grid** — Responsive grid layout
+- **Tabs** — Tabbed content with keyboard navigation
+- **Button** — Styled buttons with variants
+- **PostLayout** — Full-page blog post layout with SEO
+
+## Integration
+
+Import components directly into your Astro pages:
+
+```astro
+---
+import Card from "@astro-blogs/components/Card.astro";
+import Grid from "@astro-blogs/components/Grid.astro";
+---
+
+<Grid columns={3}>
+  <Card title="Post 1" />
+  <Card title="Post 2" />
+  <Card title="Post 3" />
+</Grid>
+```

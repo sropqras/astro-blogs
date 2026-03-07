@@ -1,0 +1,26 @@
+---
+import { LocalAdapter } from "@astro-blogs/core";
+import PostLayout from "@astro-blogs/components/PostLayout.astro";
+
+const adapter = new LocalAdapter("./src/content/posts");
+
+export async function getStaticPaths() {
+  const adapter = new LocalAdapter("./src/content/posts");
+  const posts = await adapter.getPosts();
+  return posts.map((post) => ({ params: { slug: post.slug } }));
+}
+
+const { slug } = Astro.params;
+const post = await adapter.getPost(slug!);
+---
+
+<PostLayout
+  title={post.title}
+  date={post.date}
+  description={post.description}
+  tags={post.tags}
+  author="astro-blogs"
+  siteName="astro-blogs Demo"
+>
+  <Fragment set:html={post.content} />
+</PostLayout>
