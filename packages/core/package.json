@@ -1,6 +1,6 @@
 {
   "name": "@astro-blogs/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Content adapter library and REST API for Astro blog systems",
   "license": "ISC",
